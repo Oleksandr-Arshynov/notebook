@@ -1,8 +1,19 @@
 from collections import UserDict
+from datetime import datetime, timedelta
 
 class Field:
     def __init__(self, value):
-        self.value = value
+        self._value = value
+        
+    @property   
+    def value(self):
+        return self._value
+    
+    @value.setter
+    def value(self, new_value):
+        if not isinstance(new_value, str):
+            raise ValueError("Value must be a string.")
+        self._value = new_value
 
     def __str__(self):
         return str(self.value)
@@ -12,15 +23,41 @@ class Name(Field):
 
 class Phone(Field):
     def __init__(self, value):
-        # Валідація формату номера телефону
-        if not isinstance(value, str) or not value.isdigit() or len(value) != 10:
-            raise ValueError("Phone number must be a 10-digit string.")
         super().__init__(value)
+        self.validate_phone
+    
+    @Field.value.setter
+    def value(self, new_value):
+        self._value = new_value
+        self.validate_phone
+        
+    def validate_phone(self):
+        if not self._value.isdigit() or len(self._value) != 10:
+           raise ValueError("Phone number must be a 10-digit string.") 
 
+class Birthday(Field):
+    def __init__(self, value=None):
+        if value is not None:
+            try:
+                datetime.strptime(value, '%Y-%m-%d')
+            except ValueError:
+                raise ValueError("Invalid date format")
+        super().__init__(value)
+    
+    @Field.value.setter
+    def value(self, new_value):
+        if new_value is not None:
+            try:
+                datetime.strptime(new_value, '%Y-%m-%d')
+            except ValueError:
+                raise ValueError("Invalid date format. Use YYYY-MM-DD.")
+        self._value = new_value
+        
 class Record:
-    def __init__(self, name):
+    def __init__(self, name, birthday=None):
         self.name = Name(name)
         self.phones = []
+        self.birthday = Birthday(birthday)
 
     def add_phone(self, phone):
         # Додавання телефону до списку
@@ -46,12 +83,28 @@ class Record:
                 return p
         return None
 
-
+    def days_to_birthday(self):
+        if self.burthday.value:
+            today = datetime.today(today.year, self.birthday.valu.month, self.birthday.value.day).date()
+            if today > next_birthday:
+                next_birthday = datetime(today.year + 1, self.birthday.value.month, self.birthday.value.day).date()
+            days_left = (next_birthday - today).days
+            return days_left
+        
     def __str__(self):
         # Перевизначення методу для зручного виведення
         return f"Contact name: {self.name.value}, phones: {'; '.join(str(p) for p in self.phones)}"
 
+    
 class AddressBook(UserDict):
+    def __iter__(self, n=1):
+        count = 0
+        for key in self.data:
+            yield self.data[key]
+            count += 1
+            if count == n:
+                return
+            
     def add_record(self, record):
         # Додавання запису до книги
         self.data[record.name.value] = record
